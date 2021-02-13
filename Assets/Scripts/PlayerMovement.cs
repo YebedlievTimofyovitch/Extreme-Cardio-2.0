@@ -5,13 +5,19 @@ using UnityEngine.PlayerLoop;
 
 public class PlayerMovement : MonoBehaviour
 {
+    private Transform LR_Lane_Transform = null;
+
     #region "Left Right Platform Movement Variables"
     [SerializeField] private float LR_movementSpeed = 10f;
     [SerializeField] private float[] LR_Positions = new float[2] { 0.0f , 0.0f };
     private Vector3 LR_P_position = new Vector3();
     private bool is_GoingLeft = false;
     private bool has_SwitchedLanes = false;
-    private bool is_In_LRlane = false;
+    static public bool is_In_LRlane = false;
+    #endregion
+
+    #region Inside the Connector Variables
+    private bool is_In_Connector = false;
     #endregion
 
     //zain
@@ -33,11 +39,16 @@ public class PlayerMovement : MonoBehaviour
     {
         
 
-        if (is_In_LRlane)
+        if (is_In_LRlane && !is_In_Connector)
         {
             LeftRightMovementCheck();
             if(has_SwitchedLanes)
             SidewaysMovement(is_GoingLeft);
+        }
+
+        if(!is_In_LRlane & is_In_Connector)
+        {
+            ReturnToCenter(LR_Lane_Transform);
         }
     }
 
@@ -76,6 +87,11 @@ public class PlayerMovement : MonoBehaviour
         player_RB.velocity = transform.forward * forward_Speed * Time.deltaTime;
     }
 
+    private void ReturnToCenter(Transform FPp)
+    {
+        transform.position = Vector3.Lerp( transform.position , new Vector3(FPp.position.x , transform.position.y , transform.position.z) , LR_movementSpeed * Time.deltaTime );
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if(other.tag == "PForward")
@@ -84,8 +100,25 @@ public class PlayerMovement : MonoBehaviour
             LR_P_position = other.transform.position;
         }
 
-        print(is_In_LRlane);
+        if(other.tag == "Connector")
+        {
+            is_In_Connector = true;
+        }
     }
 
-    
+    private void OnTriggerExit(Collider other)
+    {
+        if(other.tag == "PForward")
+        {
+            is_In_LRlane = false;
+            LR_Lane_Transform = other.transform;
+        }
+
+        if (other.tag == "Connector")
+        {
+            is_In_Connector = false;
+        }
+    }
+
+
 }
