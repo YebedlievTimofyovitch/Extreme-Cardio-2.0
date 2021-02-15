@@ -7,6 +7,8 @@ public class PlayerMovement : MonoBehaviour
 {
     private Transform LR_Lane_Transform = null;
 
+
+
     #region "Left Right Platform Movement Variables"
     [SerializeField] private float LR_movementSpeed = 10f;
     [SerializeField] private float[] LR_Positions = new float[2] { 0.0f , 0.0f };
@@ -18,12 +20,12 @@ public class PlayerMovement : MonoBehaviour
 
     #region Inside the Connector Variables
     private bool is_In_Connector = false;
+    private bool was_In_LR = false;
     #endregion
 
-    //zain
 
     #region
-    Rigidbody player_RB = null;
+    private Rigidbody player_RB = null;
     [SerializeField] float forward_Speed = 10f;
     #endregion
 
@@ -46,7 +48,7 @@ public class PlayerMovement : MonoBehaviour
             SidewaysMovement(is_GoingLeft);
         }
 
-        if(!is_In_LRlane & is_In_Connector)
+        if(!is_In_LRlane && is_In_Connector && was_In_LR)
         {
             ReturnToCenter(LR_Lane_Transform);
         }
@@ -97,6 +99,7 @@ public class PlayerMovement : MonoBehaviour
         if(other.tag == "PForward")
         {
             is_In_LRlane = true;
+            was_In_LR = true;
             LR_P_position = other.transform.position;
         }
 

@@ -6,6 +6,8 @@ TagManager:
   tags:
   - PForward
   - Connector
+  - Connector Begin
+  - Connector End
   layers:
   - Default
   - TransparentFX
