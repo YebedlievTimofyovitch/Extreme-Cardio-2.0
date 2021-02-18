@@ -6,7 +6,7 @@ using UnityEngine.PlayerLoop;
 public class PlayerMovement : MonoBehaviour
 {
     private Transform LR_Lane_Transform = null;
-
+    private Transform direction = null;
 
 
     #region "Left Right Platform Movement Variables"
@@ -48,9 +48,10 @@ public class PlayerMovement : MonoBehaviour
             SidewaysMovement(is_GoingLeft);
         }
 
-        if(!is_In_LRlane && is_In_Connector && was_In_LR)
+        if(!is_In_LRlane && was_In_LR)
         {
             ReturnToCenter(LR_Lane_Transform);
+            RotateTowardsWest_East(direction);
         }
     }
 
@@ -62,6 +63,8 @@ public class PlayerMovement : MonoBehaviour
     #region Left & Right Movement Methods
     private void SidewaysMovement(bool isGL)
         {
+            // in order to make the movement continues without stopping when leaving the button
+            // a boolean was added. named "is going left" that changes value when a direction is selected
             if(isGL)
             transform.position = Vector3.Lerp(transform.position, new Vector3(LR_P_position.x + LR_Positions[1], transform.position.y, transform.position.z), LR_movementSpeed * Time.deltaTime);
             else if(!isGL)
@@ -86,11 +89,22 @@ public class PlayerMovement : MonoBehaviour
 
     private void MoveForward()
     {
+        //velocity used to set the speed of forward movement (might need some tweeks since it depends on the rigidbody)
         player_RB.velocity = transform.forward * forward_Speed * Time.deltaTime;
+    }
+
+    private void RotateTowardsWest_East(Transform dir)
+    {
+        if (dir != null)
+        {
+            print("is rotating");
+            transform.rotation = Quaternion.LookRotation(transform.position - dir.position, transform.forward * Time.deltaTime * 1000f);
+        }
     }
 
     private void ReturnToCenter(Transform FPp)
     {
+        //let's the player move back to the center whenever he has left the forward platform (AKA left right lane)
         transform.position = Vector3.Lerp( transform.position , new Vector3(FPp.position.x , transform.position.y , transform.position.z) , LR_movementSpeed * Time.deltaTime );
     }
 
@@ -98,6 +112,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if(other.tag == "PForward")
         {
+            LR_Lane_Transform = other.transform;
             is_In_LRlane = true;
             was_In_LR = true;
             LR_P_position = other.transform.position;
@@ -106,6 +121,7 @@ public class PlayerMovement : MonoBehaviour
         if(other.tag == "Connector")
         {
             is_In_Connector = true;
+            direction = other.GetComponent<Connector>().PickDirection(other.GetComponent<Connector>().is_Triple);
         }
     }
 
@@ -114,11 +130,12 @@ public class PlayerMovement : MonoBehaviour
         if(other.tag == "PForward")
         {
             is_In_LRlane = false;
-            LR_Lane_Transform = other.transform;
+            
         }
 
         if (other.tag == "Connector")
         {
+            was_In_LR = false;
             is_In_Connector = false;
         }
     }
