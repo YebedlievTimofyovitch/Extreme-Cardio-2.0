@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,11 +17,14 @@ public class PlayerMovement : MonoBehaviour
     private bool is_GoingLeft = false;
     private bool has_SwitchedLanes = false;
     static public bool is_In_LRlane = false;
+    private bool is_Turning = false;
     #endregion
 
     #region Inside the Connector Variables
+    [SerializeField] private float rotation_Multiplyer = 10.0f;
+    [SerializeField] private float Amount_to_Rotate = 90.0f;
     private bool is_In_Connector = false;
-    private bool was_In_LR = false;
+    public static bool was_In_LR = false;
     #endregion
 
 
@@ -39,7 +43,6 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
 
         if (is_In_LRlane && !is_In_Connector)
         {
@@ -51,13 +54,21 @@ public class PlayerMovement : MonoBehaviour
         if(!is_In_LRlane && was_In_LR)
         {
             ReturnToCenter(LR_Lane_Transform);
+        }
+
+        if(is_Turning)
+        {
             RotateTowardsWest_East(direction);
         }
+
+        if(!is_Turning)
+            MoveForward();
     }
 
     void FixedUpdate()
     {
-        MoveForward();
+        
+        
     }
 
     #region Left & Right Movement Methods
@@ -89,7 +100,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void MoveForward()
     {
-        //velocity used to set the speed of forward movement (might need some tweeks since it depends on the rigidbody)
         player_RB.velocity = transform.forward * forward_Speed * Time.deltaTime;
     }
 
@@ -97,8 +107,17 @@ public class PlayerMovement : MonoBehaviour
     {
         if (dir != null)
         {
-            print("is rotating");
-            transform.rotation = Quaternion.LookRotation(transform.position - dir.position, transform.forward * Time.deltaTime * 1000f);
+            if (dir.tag == "east")
+            {
+
+                TurnSetAmountOfDegrees(rotation_Multiplyer , "east");
+            }
+            else if (dir.tag == "west")
+            {
+
+                TurnSetAmountOfDegrees(rotation_Multiplyer , "west");
+            }
+
         }
     }
 
@@ -106,6 +125,31 @@ public class PlayerMovement : MonoBehaviour
     {
         //let's the player move back to the center whenever he has left the forward platform (AKA left right lane)
         transform.position = Vector3.Lerp( transform.position , new Vector3(FPp.position.x , transform.position.y , transform.position.z) , LR_movementSpeed * Time.deltaTime );
+    }
+
+    private void TurnSetAmountOfDegrees(float multiplyer , string tag)
+    {
+        float atr;
+
+        if (tag == "east")
+            atr = Amount_to_Rotate;
+        else
+            atr = -Amount_to_Rotate;
+
+        player_RB.velocity = Vector3.zero;
+        Quaternion tr = transform.rotation;
+        print("is turning");
+        tr.eulerAngles = Vector3.Lerp(transform.rotation.eulerAngles, new Vector3(0.0f, atr , 0.0f) , multiplyer * Time.deltaTime);
+        transform.rotation = tr;
+
+        if(transform.eulerAngles.y >= 89.5f && tag == "east")
+        {
+            is_Turning = false;
+        }
+        else if((transform.eulerAngles.y >= -89.5f ) && tag == "west")
+        {
+            is_Turning = false;
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -118,10 +162,17 @@ public class PlayerMovement : MonoBehaviour
             LR_P_position = other.transform.position;
         }
 
-        if(other.tag == "Connector")
+        if (other.tag == "Turn Point")
+        {
+            is_Turning = true;
+            other.gameObject.SetActive(false);
+        }
+
+        if (other.tag == "Connector")
         {
             is_In_Connector = true;
             direction = other.GetComponent<Connector>().PickDirection(other.GetComponent<Connector>().is_Triple);
+            print(direction);
         }
     }
 
@@ -132,6 +183,8 @@ public class PlayerMovement : MonoBehaviour
             is_In_LRlane = false;
             
         }
+
+        
 
         if (other.tag == "Connector")
         {

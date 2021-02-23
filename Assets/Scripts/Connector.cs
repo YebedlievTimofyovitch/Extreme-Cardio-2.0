@@ -1,15 +1,17 @@
+using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Connector : MonoBehaviour
 {
-    private GameObject[] children = new GameObject[3] { null, null, null };
+    private Transform[] children = new Transform[3] { null, null, null };
     [SerializeField] public bool is_Triple = false;
+    [SerializeField] private GameObject turn_Point = null;
 
     private void OnEnable()
     {
-        
+        ProvideDirections();
     }
 
     private void OnDisable()
@@ -21,24 +23,43 @@ public class Connector : MonoBehaviour
     {
         int i = 0;
 
-        foreach(GameObject child in transform)
+        foreach(Transform child in transform)
         {
-            if(child.tag == "connector")
+            if(child.tag == "Connector")
             {
-                children[i] = child;
-                i += 1;
+                foreach(Transform gChild in child)
+                {
+                    if(gChild != null)
+                    children[i] = gChild;
+
+                    print(children[i].tag);
+                    i += 1;
+                }
+                break;
             }
         }
     }
 
     public Transform PickDirection(bool is_Triple)
     {
-        GameObject go = null;
+        Transform go = null;
         if (is_Triple)
-        { go = children[Random.Range(0, 2)]; }
+        { go = children[Random.Range(0, 3)]; print(go.tag); }
+        else if (!is_Triple)
+        { go = children[Random.Range(0, 2)]; print(go.tag); }
+
+        if (go != null)
+        {
+            if((go.tag == "west" || go.tag == "east") && PlayerMovement.was_In_LR)
+            {
+                turn_Point.SetActive(true);
+            }
+            return go;
+        }
         else
-        { go = children[Random.Range(0, 1)]; }
-        
-        return go.transform;
+        {
+            print("did not find any connector");
+            return null;
+        }
     }
 }

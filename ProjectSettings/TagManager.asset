@@ -8,6 +8,10 @@ TagManager:
   - Connector
   - Connector Begin
   - Connector End
+  - west
+  - north
+  - east
+  - Turn Point
   layers:
   - Default
   - TransparentFX
